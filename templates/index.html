@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>디지털 묘비명 생성기</title>
+    <style>
+        body { margin:0; background:url('/static/background.jpg') no-repeat center center fixed; background-size:cover; color:white; font-family:sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; flex-direction:column; }
+        #start-btn { padding: 15px 30px; font-size: 20px; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div id="intro" style="text-align:center; font-size:24px; line-height:1.5;"></div>
+    <button id="start-btn" onclick="location.href='/question'">시작하기</button>
+    <script>
+        const fullText = "당신은 지금부터 당신의 사후 묘비명을 받아보게 될겁니다. 묘비명을 만들기 위해 몇가지 질문을 드릴테니 답변을 적어주세요.";
+        const sentences = fullText.match(/[^.!?]+[.!?\u3002]/g) || [fullText];
+        let sentenceIdx = 0, charIdx = 0;
+
+        function typing() {
+            if (sentenceIdx < sentences.length) {
+                const currentSentence = sentences[sentenceIdx];
+                if (charIdx < currentSentence.length) {
+                    document.getElementById("intro").innerHTML += currentSentence.charAt(charIdx);
+                    charIdx++;
+                    setTimeout(typing, 50);
+                } else {
+                    document.getElementById("intro").innerHTML += "<br>";
+                    sentenceIdx++;
+                    charIdx = 0;
+                    setTimeout(typing, 300);
+                }
+            }
+        }
+        typing();
+    </script>
+</body>
+</html>

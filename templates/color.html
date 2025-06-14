@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>묘비 색상 선택</title>
+    <style>
+        body { margin:0; background:url('/static/background.jpg') no-repeat center center fixed; background-size:cover; color:white; font-family:sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; flex-direction:column; }
+        input[type="color"] { width: 200px; height: 100px; border: none; margin-bottom: 20px; }
+        button { padding: 10px 20px; font-size: 20px; margin: 10px; }
+        canvas { border-radius: 10px; box-shadow: 0 0 15px rgba(0,0,0,0.5); margin-top: 20px; background:transparent; }
+
+        .tombstone-option {
+            width: 100px;
+            height: auto;
+            margin: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .tombstone-option:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>묘비 모양을 선택하세요</h1>
+    <div style="display: flex; flex-wrap: wrap; justify-content: center;">
+            <img src="{{ url_for('static', filename='tombstone.png') }}" onclick="selectShape('tombstone.png')" class="tombstone-option">
+            <img src="{{ url_for('static', filename='tombstone2.png') }}" onclick="selectShape('tombstone2.png')" class="tombstone-option">
+            <img src="{{ url_for('static', filename='tombstone3.png') }}" onclick="selectShape('tombstone3.png')" class="tombstone-option">
+            <img src="{{ url_for('static', filename='tombstone4.png') }}" onclick="selectShape('tombstone4.png')" class="tombstone-option">
+            <img src="{{ url_for('static', filename='tombstone5.png') }}" onclick="selectShape('tombstone5.png')" class="tombstone-option">
+        </div>
+
+    <h1>묘비 색상을 선택해주세요</h1>
+    <form method="post">
+        <input type="hidden" name="shape" id="shape" value="tombstone.png">
+        <div style="margin-left: 50px; margin-bottom: 20px;">
+            <input type="color" id="color" name="color" value="#808080" onchange="updatePreview()">
+        </div>
+
+        <div>
+            <button type="button" onclick="recommendColor()">AI 추천 색상</button>
+            <button type="submit">완료</button>
+        </div>
+        <canvas id="preview" width="300" height="400"></canvas>
+        <img id="baseImage" src="{{ url_for('static', filename='tombstone.png') }}" style="display:none;">
+    </form>
+
+    <script>
+        async function recommendColor() {
+            const response = await fetch("/ai_color", { method: "POST" });
+            const color = await response.text();
+            document.getElementById("color").value = color;
+            updatePreview();
+        }
+
+        function hexToRGB(hex) {
+            return [
+                parseInt(hex.substr(1, 2), 16),
+                parseInt(hex.substr(3, 2), 16),
+                parseInt(hex.substr(5, 2), 16)
+            ];
+        }
+
+        function overlayBlend(base, color) {
+            return base < 128
+                ? (2 * base * color / 255)
+                : (255 - 2 * (255 - base) * (255 - color) / 255);
+        }
+
+        function selectShape(filename) {
+            document.getElementById('shape').value = filename;
+            document.getElementById('baseImage').src = "/static/" + filename;
+
+            const img = document.getElementById("baseImage");
+            if (img.complete) {
+                updatePreview();
+            } else {
+                img.onload = updatePreview;
+            }
+        }
+
+        function updatePreview() {
+            document.getElementById("previewImage").style.filter = "drop-shadow(0 0 0 " + document.getElementById("color").value + ")";
+        }
+
+        function updatePreview() {
+            const colorHex = document.getElementById("color").value;
+            const colorRGB = hexToRGB(colorHex);
+            const img = document.getElementById("baseImage");
+            const canvas = document.getElementById("preview");
+            const ctx = canvas.getContext("2d");
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < imageData.data.length; i += 4) {
+                if (imageData.data[i+3] === 0) continue;
+                imageData.data[i] = overlayBlend(imageData.data[i], colorRGB[0]);
+                imageData.data[i+1] = overlayBlend(imageData.data[i+1], colorRGB[1]);
+                imageData.data[i+2] = overlayBlend(imageData.data[i+2], colorRGB[2]);
+            }
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        window.onload = () => {
+            const img = document.getElementById("baseImage");
+            if (img.complete) {
+                updatePreview();
+            } else {
+                img.onload = updatePreview;
+            }
+        };
+    </script>
+</body>
+</html>

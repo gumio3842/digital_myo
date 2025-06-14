@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>묘비명 결과</title>
+    <style>
+        body { margin: 0; background: url('/static/background.jpg') no-repeat center center fixed; background-size: cover;
+               display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; }
+        canvas { cursor: pointer; border-radius: 15px; box-shadow: 0 0 15px rgba(0,0,0,0.6); }
+        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                   background: rgba(0, 0, 0, 0.7); justify-content: center; align-items: center; z-index: 10; }
+        #overlay-content { background: rgba(240,240,240,0.95); padding: 30px; border-radius: 20px; width: 400px; text-align: center; color: #222; }
+        #close-btn { margin-top: 20px; width: 60px; height: 60px; border-radius: 50%; border: none; background: #444; color: white; font-size: 18px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <canvas id="tombstone" width="300" height="400" onclick="showOverlay()"></canvas>
+    <img id="baseImage" src="{{ url_for('static', filename=shape) }}" style="display:none;">
+    <div id="overlay">
+        <div id="overlay-content">
+            <h2>{{ data.name }}</h2>
+            <p>{{ data.birth }}</p>
+            <p style="margin-top:20px; white-space: pre-line;">{{ epitaph }}</p>
+            <button id="close-btn" onclick="closeOverlay()">닫기</button>
+        </div>
+    </div>
+    <script>
+        function hexToRGB(hex) {
+            return [
+                parseInt(hex.substr(1, 2), 16),
+                parseInt(hex.substr(3, 2), 16),
+                parseInt(hex.substr(5, 2), 16)
+            ];
+        }
+
+        function overlayBlend(base, color) {
+            return base < 128
+                ? (2 * base * color / 255)
+                : (255 - 2 * (255 - base) * (255 - color) / 255);
+        }
+
+        function renderTombstone() {
+            const color = "{{ color }}";
+            const colorRGB = hexToRGB(color);
+            const img = document.getElementById("baseImage");
+            const canvas = document.getElementById("tombstone");
+            const ctx = canvas.getContext("2d");
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < imageData.data.length; i += 4) {
+                if (imageData.data[i+3] === 0) continue;
+                imageData.data[i] = overlayBlend(imageData.data[i], colorRGB[0]);
+                imageData.data[i+1] = overlayBlend(imageData.data[i+1], colorRGB[1]);
+                imageData.data[i+2] = overlayBlend(imageData.data[i+2], colorRGB[2]);
+            }
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        function showOverlay() { document.getElementById('overlay').style.display = 'flex'; }
+        function closeOverlay() { document.getElementById('overlay').style.display = 'none'; }
+
+        window.onload = () => {
+            const img = document.getElementById("baseImage");
+            if (img.complete) {
+                renderTombstone();
+            } else {
+                img.onload = renderTombstone;
+            }
+        };
+    </script>
+</body>
+</html>
