@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>스타일 선택</title>
+    <style>
+        body { margin:0; background:url('/static/background.jpg') no-repeat center center fixed; background-size:cover; color:white; font-family:sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; flex-direction:column; }
+        button { padding: 15px 30px; font-size: 20px; margin: 10px; }
+    </style>
+</head>
+<body>
+    <h1>당신의 묘비명이 거의 준비되었어요.<br>마지막으로 어떤 스타일로 제작할까요?</h1>
+    <form method="post">
+        <button name="style" value="normal">평범하게 해줘</button>
+        <button name="style" value="spicy">매운맛으로 해줘</button>
+        <button name="style" value="heroic">영웅적으로 해줘</button>
+        <button name="style" value="random">아무거나 좋아</button>
+    </form>
+</body>
+</html>
